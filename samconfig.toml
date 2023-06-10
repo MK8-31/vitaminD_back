@@ -1,0 +1,12 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "vitaminDback"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-xkblql0oe0r7"
+s3_prefix = "vitaminDback"
+region = "ap-northeast-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+disable_rollback = true
+image_repositories = []
