@@ -20,19 +20,20 @@ Resources:
                 uri:
                   Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PostFunction.Arn}/invocations
               responses: {}
-            get:
-              x-amazon-apigateway-integration:
-                httpMethod: POST
-                type: aws_proxy
-                uri:
-                  Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetFunction.Arn}/invocations
-              responses: {}
             delete:
               x-amazon-apigateway-integration:
                 httpMethod: POST
                 type: aws_proxy
                 uri:
                   Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteFunction.Arn}/invocations
+              responses: {}
+          /{groupName}:
+            get:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetFunction.Arn}/invocations
               responses: {}
       EndpointConfiguration: REGIONAL
       TracingEnabled: true
@@ -90,14 +91,6 @@ Resources:
       MemorySize: 3008
       Timeout: 30
       Tracing: Active
-      Events:
-        ApiGET:
-          Type: Api
-          Properties:
-            Path: /
-            Method: GET
-            RestApiId:
-              Ref: Api
       Environment:
         Variables:
           USERGROUP_TABLE_NAME:
@@ -110,6 +103,14 @@ Resources:
       - DynamoDBCrudPolicy:
           TableName:
             Ref: userGroup
+      Events:
+        ApiGETgroupName:
+          Type: Api
+          Properties:
+            Path: /{groupName}
+            Method: GET
+            RestApiId:
+              Ref: Api
     Metadata:
       SamResourceId: GetFunction
   GetFunctionLogGroup:
