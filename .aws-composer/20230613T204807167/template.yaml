@@ -1,0 +1,141 @@
+Transform: AWS::Serverless-2016-10-31
+Resources:
+  Api:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub
+        - ${ResourceName} From Stack ${AWS::StackName}
+        - ResourceName: Api
+      StageName: Prod
+      DefinitionBody:
+        openapi: '3.0'
+        info: {}
+        paths:
+          /:
+            post:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PostFunction.Arn}/invocations
+              responses: {}
+            delete:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${DeleteFunction.Arn}/invocations
+              responses: {}
+          /{groupName}:
+            get:
+              responses: {}
+      EndpointConfiguration: REGIONAL
+      TracingEnabled: true
+  PostFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: !Sub
+        - Stack ${AWS::StackName} Function ${ResourceName}
+        - ResourceName: PostFunction
+      CodeUri: src/PostFunction
+      Handler: main
+      Runtime: go1.x
+      MemorySize: 3008
+      Timeout: 30
+      Tracing: Active
+      Environment:
+        Variables:
+          USERGROUP_TABLE_NAME: !Ref userGroup
+          USERGROUP_TABLE_ARN: !GetAtt userGroup.Arn
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref userGroup
+      Events:
+        ApiPOST:
+          Type: Api
+          Properties:
+            Path: /
+            Method: POST
+            RestApiId: !Ref Api
+  PostFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${PostFunction}
+  GetFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: !Sub
+        - Stack ${AWS::StackName} Function ${ResourceName}
+        - ResourceName: GetFunction
+      CodeUri: src/GetFunction
+      Handler: main
+      Runtime: go1.x
+      MemorySize: 3008
+      Timeout: 30
+      Tracing: Active
+      Environment:
+        Variables:
+          USERGROUP_TABLE_NAME: !Ref userGroup
+          USERGROUP_TABLE_ARN: !GetAtt userGroup.Arn
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref userGroup
+      Events:
+        ApiGETgroupName:
+          Type: Api
+          Properties:
+            Path: /{groupName}
+            Method: GET
+            RestApiId: !Ref Api
+  GetFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${GetFunction}
+  userGroup:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: userName
+          AttributeType: S
+      BillingMode: PAY_PER_REQUEST
+      KeySchema:
+        - AttributeName: userName
+          KeyType: HASH
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      GlobalSecondaryIndexes:
+        - IndexName: GSI-groupName
+          KeySchema:
+            - AttributeName: groupName
+              KeyType: HASH
+  DeleteFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: !Sub
+        - Stack ${AWS::StackName} Function ${ResourceName}
+        - ResourceName: DeleteFunction
+      CodeUri: src/DeleteFunction
+      Handler: main
+      Runtime: go1.x
+      MemorySize: 3008
+      Timeout: 30
+      Tracing: Active
+      Events:
+        ApiDELETE:
+          Type: Api
+          Properties:
+            Path: /
+            Method: DELETE
+            RestApiId: !Ref Api
+      Environment:
+        Variables:
+          USERGROUP_TABLE_NAME: !Ref userGroup
+          USERGROUP_TABLE_ARN: !GetAtt userGroup.Arn
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref userGroup
+  DeleteFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${DeleteFunction}
