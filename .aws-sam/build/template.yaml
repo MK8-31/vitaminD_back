@@ -12,14 +12,6 @@ Resources:
         openapi: '3.0'
         info: {}
         paths:
-          /delete:
-            post:
-              x-amazon-apigateway-integration:
-                httpMethod: POST
-                type: aws_proxy
-                uri:
-                  Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UserDeleteFunction.Arn}/invocations
-              responses: {}
           /register:
             post:
               x-amazon-apigateway-integration:
@@ -35,6 +27,14 @@ Resources:
                 type: aws_proxy
                 uri:
                   Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetRankingListFunction.Arn}/invocations
+              responses: {}
+          /delete/{userName}:
+            delete:
+              x-amazon-apigateway-integration:
+                httpMethod: POST
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UserDeleteFunction.Arn}/invocations
               responses: {}
       EndpointConfiguration: REGIONAL
       TracingEnabled: true
@@ -85,11 +85,11 @@ Resources:
           TableName:
             Ref: userGroup
       Events:
-        ApiPOSTdelete:
+        ApiDELETEdeleteuserName:
           Type: Api
           Properties:
-            Path: /delete
-            Method: POST
+            Path: /delete/{userName}
+            Method: DELETE
             RestApiId:
               Ref: Api
     Metadata:
