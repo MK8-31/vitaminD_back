@@ -22,14 +22,13 @@ const DYNAMO_ENDPOINT = "http://dynamodb:8000"
 // 本番環境にアップする時はこっちに切り替える
 // const DYNAMO_ENDPOINT = "https://dynamodb.ap-northeast-1.amazonaws.com"
 
+const TABLE_NAME = "vitaminDback-userGroup-EPWXXRQCUDMA"
 
-type UserGroup struct {
-    UserName  string `dynamodbav:"userName" json:userName`
-    GroupName string `dynamodbav:"groupName index:"GSI-groupName" json:groupName`
-}
 
 type User struct {
-	UserName  string `dynamodbav:"userName" json:userName`
+    UserName  string `dynamodbav:"userName" json:userName`
+    GroupName string `dynamodbav:"groupName" json:groupName`
+	RegisterDate string `dynamodbav:"registerDate" json:registerDate`
 }
 
 // Response Lambdaが返答するデータ
@@ -70,31 +69,9 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
     db := dynamodb.NewFromConfig(cfg)
 
-
-    // // 検索条件を用意
-    // getParam := &dynamodb.GetItemInput{
-    //     TableName: aws.String("vitaminDback-userGroup-EPWXXRQCUDMA"),
-    //     Key: map[string]types.AttributeValue{
-    //         "userName": &types.AttributeValueMemberS{Value: pathparam},
-    //     },
-    // }
-
-    // // 検索
-    // result, err := db.GetItem(context.TODO(), getParam)
-	// // fmt.Println(err.Error())
-    // if err != nil {
-	// 	fmt.Println("error in search")
-    //     return events.APIGatewayProxyResponse{
-    //         Body:       err.Error(),
-    //         StatusCode: 404,
-    //     }, err
-    // }
-
-	// fmt.Println(result)
-
 	// クエリを用いてグローバルセカンダリインデックス（GSI)を検索
 	input := &dynamodb.QueryInput{
-		TableName: aws.String("vitaminDback-userGroup-EPWXXRQCUDMA"),
+		TableName: aws.String(TABLE_NAME),
 		IndexName: aws.String("GSI-groupName"),
 		KeyConditionExpression: aws.String("groupName = :groupNameValue"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
