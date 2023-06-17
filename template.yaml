@@ -25,7 +25,7 @@ Resources:
                 type: aws_proxy
                 uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UserRegisterFunction.Arn}/invocations
               responses: {}
-          /ranking/{groupName}:
+          /ranking/{userName}:
             get:
               x-amazon-apigateway-integration:
                 httpMethod: POST
@@ -138,10 +138,10 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref userGroup
       Events:
-        ApiGETrankinggroupName:
+        ApiGETrankinguserName:
           Type: Api
           Properties:
-            Path: /ranking/{groupName}
+            Path: /ranking/{userName}
             Method: GET
             RestApiId: !Ref Api
   GetRankingListFunctionLogGroup:
