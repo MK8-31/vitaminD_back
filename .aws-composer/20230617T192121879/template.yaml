@@ -3,8 +3,7 @@ Resources:
   Api:
     Type: AWS::Serverless::Api
     Properties:
-      Name:
-        Fn::Sub:
+      Name: !Sub
         - ${ResourceName} From Stack ${AWS::StackName}
         - ResourceName: Api
       StageName: Prod
@@ -17,24 +16,21 @@ Resources:
               x-amazon-apigateway-integration:
                 httpMethod: POST
                 type: aws_proxy
-                uri:
-                  Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UserDeleteFunction.Arn}/invocations
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UserDeleteFunction.Arn}/invocations
               responses: {}
           /register:
             post:
               x-amazon-apigateway-integration:
                 httpMethod: POST
                 type: aws_proxy
-                uri:
-                  Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UserRegisterFunction.Arn}/invocations
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UserRegisterFunction.Arn}/invocations
               responses: {}
-          /ranking/{userName}:
+          /ranking/{groupName}:
             get:
               x-amazon-apigateway-integration:
                 httpMethod: POST
                 type: aws_proxy
-                uri:
-                  Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetRankingListFunction.Arn}/invocations
+                uri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GetRankingListFunction.Arn}/invocations
               responses: {}
       EndpointConfiguration: REGIONAL
       TracingEnabled: true
@@ -42,31 +38,30 @@ Resources:
     Type: AWS::DynamoDB::Table
     Properties:
       AttributeDefinitions:
-      - AttributeName: userName
-        AttributeType: S
-      - AttributeName: groupName
-        AttributeType: S
+        - AttributeName: userName
+          AttributeType: S
+        - AttributeName: groupName
+          AttributeType: S
       BillingMode: PAY_PER_REQUEST
       KeySchema:
-      - AttributeName: userName
-        KeyType: HASH
+        - AttributeName: userName
+          KeyType: HASH
       StreamSpecification:
         StreamViewType: NEW_AND_OLD_IMAGES
       GlobalSecondaryIndexes:
-      - IndexName: GSI-groupName
-        KeySchema:
-        - AttributeName: groupName
-          KeyType: HASH
-        Projection:
-          ProjectionType: ALL
+        - IndexName: GSI-groupName
+          KeySchema:
+            - AttributeName: groupName
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
   UserDeleteFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Description:
-        Fn::Sub:
+      Description: !Sub
         - Stack ${AWS::StackName} Function ${ResourceName}
         - ResourceName: UserDeleteFunction
-      CodeUri: UserDeleteFunction
+      CodeUri: src/UserDeleteFunction
       Handler: main
       Runtime: go1.x
       MemorySize: 3008
@@ -74,40 +69,30 @@ Resources:
       Tracing: Active
       Environment:
         Variables:
-          USERGROUP_TABLE_NAME:
-            Ref: userGroup
-          USERGROUP_TABLE_ARN:
-            Fn::GetAtt:
-            - userGroup
-            - Arn
+          USERGROUP_TABLE_NAME: !Ref userGroup
+          USERGROUP_TABLE_ARN: !GetAtt userGroup.Arn
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName:
-            Ref: userGroup
+        - DynamoDBCrudPolicy:
+            TableName: !Ref userGroup
       Events:
         ApiPOSTdelete:
           Type: Api
           Properties:
             Path: /delete
             Method: POST
-            RestApiId:
-              Ref: Api
-    Metadata:
-      SamResourceId: UserDeleteFunction
+            RestApiId: !Ref Api
   UserDeleteFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
     Properties:
-      LogGroupName:
-        Fn::Sub: /aws/lambda/${UserDeleteFunction}
+      LogGroupName: !Sub /aws/lambda/${UserDeleteFunction}
   UserRegisterFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Description:
-        Fn::Sub:
+      Description: !Sub
         - Stack ${AWS::StackName} Function ${ResourceName}
         - ResourceName: UserRegisterFunction
-      CodeUri: UserRegisterFunction
+      CodeUri: src/UserRegisterFunction
       Handler: main
       Runtime: go1.x
       MemorySize: 3008
@@ -115,40 +100,30 @@ Resources:
       Tracing: Active
       Environment:
         Variables:
-          USERGROUP_TABLE_NAME:
-            Ref: userGroup
-          USERGROUP_TABLE_ARN:
-            Fn::GetAtt:
-            - userGroup
-            - Arn
+          USERGROUP_TABLE_NAME: !Ref userGroup
+          USERGROUP_TABLE_ARN: !GetAtt userGroup.Arn
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName:
-            Ref: userGroup
+        - DynamoDBCrudPolicy:
+            TableName: !Ref userGroup
       Events:
         ApiPOSTregister:
           Type: Api
           Properties:
             Path: /register
             Method: POST
-            RestApiId:
-              Ref: Api
-    Metadata:
-      SamResourceId: UserRegisterFunction
+            RestApiId: !Ref Api
   UserRegisterFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
     Properties:
-      LogGroupName:
-        Fn::Sub: /aws/lambda/${UserRegisterFunction}
+      LogGroupName: !Sub /aws/lambda/${UserRegisterFunction}
   GetRankingListFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Description:
-        Fn::Sub:
+      Description: !Sub
         - Stack ${AWS::StackName} Function ${ResourceName}
         - ResourceName: GetRankingListFunction
-      CodeUri: GetRankingListFunction
+      CodeUri: src/GetRankingListFunction
       Handler: main
       Runtime: go1.x
       MemorySize: 3008
@@ -156,30 +131,21 @@ Resources:
       Tracing: Active
       Environment:
         Variables:
-          USERGROUP_TABLE_NAME:
-            Ref: userGroup
-          USERGROUP_TABLE_ARN:
-            Fn::GetAtt:
-            - userGroup
-            - Arn
+          USERGROUP_TABLE_NAME: !Ref userGroup
+          USERGROUP_TABLE_ARN: !GetAtt userGroup.Arn
           ENV: prod
       Policies:
-      - DynamoDBCrudPolicy:
-          TableName:
-            Ref: userGroup
+        - DynamoDBCrudPolicy:
+            TableName: !Ref userGroup
       Events:
-        ApiGETrankinguserName:
+        ApiGETrankinggroupName:
           Type: Api
           Properties:
-            Path: /ranking/{userName}
+            Path: /ranking/{groupName}
             Method: GET
-            RestApiId:
-              Ref: Api
-    Metadata:
-      SamResourceId: GetRankingListFunction
+            RestApiId: !Ref Api
   GetRankingListFunctionLogGroup:
     Type: AWS::Logs::LogGroup
     DeletionPolicy: Retain
     Properties:
-      LogGroupName:
-        Fn::Sub: /aws/lambda/${GetRankingListFunction}
+      LogGroupName: !Sub /aws/lambda/${GetRankingListFunction}
