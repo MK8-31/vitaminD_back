@@ -33,6 +33,14 @@ type Response struct {
     Ranking        []UserData   `json:"ranking"`
 }
 
+type ErrUserNameNotFound struct {
+	userName string
+}
+
+func (e *ErrUserNameNotFound) Error() string {
+	return "userName not found"
+}
+
 func GetContributeNum(user common.User) (int64, error) {
 	/*
 		userName: githubのユーザー名（例： MK8-31)
@@ -239,6 +247,14 @@ func getUsersInGroup(userName string) ([]common.User, error) {
 		return nil, err
 	}
 
+	// userName（ユーザー）が見つからない場合
+	if groupName == "" {
+		fmt.Println("not found userName in userGroup table")
+		return nil, &ErrUserNameNotFound{userName}
+	}
+
+	fmt.Println("groupName:", groupName)
+
 	// groupNameを使って同じグループに所属しているユーザーを全て取得
 	users, err := getUsersInGroupFromGroupName(groupName, db)
 
@@ -259,10 +275,20 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 
 	if err != nil {
 		fmt.Println("error in getUsersInGroup function")
-        return events.APIGatewayProxyResponse{
-            Body:       err.Error(),
-            StatusCode: 500,
-        }, err
+		switch err.(type) {
+			// userName（ユーザー）が見つからない場合は401エラーを返す
+			case *ErrUserNameNotFound:
+				return events.APIGatewayProxyResponse{
+					Body:       err.Error(),
+					StatusCode: 401,
+				}, nil
+
+			default:
+				return events.APIGatewayProxyResponse{
+					Body:       err.Error(),
+					StatusCode: 500,
+				}, err
+		}
     }
 
 	fmt.Println(users)
