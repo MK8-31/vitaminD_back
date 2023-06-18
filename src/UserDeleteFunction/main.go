@@ -1,24 +1,66 @@
 package main
 
 import (
+	"common"
 	"context"
-	"encoding/json"
 	"fmt"
+
+	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-func Handler(ctx context.Context, event interface{}) (*struct{}, error) {
-	buf, err := json.Marshal(event)
-	if err != nil {
-		panic(err)
+// dynamodbにあるユーザーのデータを削除する
+func deleteUser(userName string) error {
+	// DynamoDBに接続
+	db, err := common.ConnectDynamoDB()
+
+	// 検索条件を用意
+	deleteParam := &dynamodb.DeleteItemInput{
+		TableName: aws.String(common.TABLE_NAME),
+		Key: map[string]types.AttributeValue{
+			"userName": &types.AttributeValueMemberS{Value: userName},
+		},
+		ConditionExpression: aws.String("attribute_exists(userName)"),
 	}
-	fmt.Println(string(buf))
 
-	var response struct{}
+	// データを削除
+	// userNameがDBにない場合はエラーを返す
+	_, err = db.DeleteItem(context.TODO(), deleteParam)
 
-	return &response, nil
+	if err != nil {
+		fmt.Println("error in item dynamodb DeleteItem")
+		fmt.Println(err.Error())
+        return err
+    }
+
+	return nil
+}
+
+func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	pathParam := request.PathParameters["userName"]
+	fmt.Println(pathParam)
+
+	// dynamodbにデータを挿入
+	err := deleteUser(pathParam)
+
+	// HTTPエラー応答を直接返す
+	if err != nil {
+		fmt.Println("error in deleteUser function")
+        return events.APIGatewayProxyResponse{
+            Body:       "userName not found",
+            StatusCode: 401,
+        }, nil
+    }
+
+    return events.APIGatewayProxyResponse{
+        Body:       "success",
+        StatusCode: 200,
+    }, nil
 }
 
 func main() {
-	lambda.Start(Handler)
+	lambda.Start(handler)
 }
