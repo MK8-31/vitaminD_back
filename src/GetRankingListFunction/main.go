@@ -1,6 +1,7 @@
 package main
 
 import (
+	"common"
 	"context"
 	"encoding/json"
 	"errors"
@@ -14,28 +15,10 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
-
-// for dev
-const AWS_REGION = "ap-northeast-1"
-const DYNAMO_ENDPOINT = "http://dynamodb:8000"
-
-// for prod
-// 本番環境にアップする時はこっちに切り替える
-// const DYNAMO_ENDPOINT = "https://dynamodb.ap-northeast-1.amazonaws.com"
-
-const TABLE_NAME = "vitaminDback-userGroup-EPWXXRQCUDMA"
-
-
-type User struct {
-    UserName  string `dynamodbav:"userName" json:userName`
-    GroupName string `dynamodbav:"groupName" json:groupName`
-	RegisterDate string `dynamodbav:"registerDate" json:registerDate`
-}
 
 type UserData struct {
 	UserName  string `json:"userName"`
@@ -50,7 +33,7 @@ type Response struct {
     Ranking        []UserData   `json:"ranking"`
 }
 
-func GetContributeNum(user User) (int64, error) {
+func GetContributeNum(user common.User) (int64, error) {
 	/*
 		userName: githubのユーザー名（例： MK8-31)
 		registerDate: 登録日（例： 2023-06-01T19:52:21+09:00)
@@ -117,7 +100,7 @@ func calculateLevel(exp int64) int64 {
 	return exp / 10
 }
 
-func getContributeData(userNameSlice []User) ([]UserData, error) {
+func getContributeData(userNameSlice []common.User) ([]UserData, error) {
 	var userDataSlice []UserData
 	for _, data := range userNameSlice {
 		exp, err := GetContributeNum(data)
@@ -157,7 +140,7 @@ func P(t interface{}) {
 	fmt.Println(reflect.TypeOf(t))
 }
 
-func getRanking(userNameSlice []User) ([]UserData, error) {
+func getRanking(userNameSlice []common.User) ([]UserData, error) {
 	/*
 		入力されたgithubのユーザーデータをもとにランキングを作成する
 
@@ -178,31 +161,37 @@ func getRanking(userNameSlice []User) ([]UserData, error) {
 	return ranking, nil
 }
 
-// 特定のグループに所属している全てのユーザーを取得
-func getUsersInGroup(userName string) ([]User, error) {
-	// dynamodbのエンドポイントを指定
-	customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-		if service == dynamodb.ServiceID && region == AWS_REGION {
-			return aws.Endpoint{
-				PartitionID:   "aws",
-				URL:           DYNAMO_ENDPOINT,
-				SigningRegion: AWS_REGION,
-			}, nil
-		}
-		// returning EndpointNotFoundError will allow the service to fallback to it's default resolution
-		return aws.Endpoint{}, &aws.EndpointNotFoundError{}
-	})
+// groupNameを使って同じグループに所属しているユーザーを全て取得
+func getUsersInGroupFromGroupName(groupName string, db *dynamodb.Client) ([]common.User, error) {
+	// クエリを用いてグローバルセカンダリインデックス（GSI)内を検索
+	input := &dynamodb.QueryInput{
+		TableName: aws.String(common.TABLE_NAME),
+		IndexName: aws.String("GSI-groupName"),
+		KeyConditionExpression: aws.String("groupName = :groupNameValue"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":groupNameValue": &types.AttributeValueMemberS{Value: groupName},
+		},
+	}
 
-	cfg, err := config.LoadDefaultConfig(context.TODO(), config.WithEndpointResolverWithOptions(customResolver))
+	resp, err := db.Query(context.TODO(), input)
+	if err != nil {
+		fmt.Println("error in parse users")
+		return nil, err
+	}
 
+    // 結果を構造体にパース
+    users := []common.User{}
+    err = attributevalue.UnmarshalListOfMaps(resp.Items, &users)
     if err != nil {
-		fmt.Println("error in cfg")
+		fmt.Println("error in parse users")
         return nil, err
     }
 
-    db := dynamodb.NewFromConfig(cfg)
+	return users, nil
+}
 
-	// ユーザー名をもとにユーザー情報を取得
+// ユーザー名からユーザーが所属しているgroupNameを取得
+func getGroupName(userName string, db *dynamodb.Client) (string, error) {
 	// 検索条件を用意
     getParam := &dynamodb.GetItemInput{
         TableName: aws.String("vitaminDback-userGroup-EPWXXRQCUDMA"),
@@ -216,43 +205,47 @@ func getUsersInGroup(userName string) ([]User, error) {
 
     if err != nil {
 		fmt.Println("error in search user")
-        return nil, err
+        return "", err
     }
 
 	// 結果を構造体にパース
-    user := User{}
+    user := common.User{}
     err = attributevalue.UnmarshalMap(result.Item, &user)
     if err != nil {
 		fmt.Println("error in parse user")
-        return nil, err
+        return "", err
 	}
 
 	fmt.Println("user:", user)
 
-	// user.GroupNameを使って同じグループに所属しているユーザーを全て取得
-	// クエリを用いてグローバルセカンダリインデックス（GSI)内を検索
-	input := &dynamodb.QueryInput{
-		TableName: aws.String(TABLE_NAME),
-		IndexName: aws.String("GSI-groupName"),
-		KeyConditionExpression: aws.String("groupName = :groupNameValue"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":groupNameValue": &types.AttributeValueMemberS{Value: user.GroupName},
-		},
-	}
+	return user.GroupName, nil
+}
 
-	resp, err := db.Query(context.TODO(), input)
+// 特定のグループに所属している全てのユーザーを取得
+func getUsersInGroup(userName string) ([]common.User, error) {
+	// DynamoDBに接続
+	db, err := common.ConnectDynamoDB()
+
 	if err != nil {
-		fmt.Println("error in parse users")
+		fmt.Println("error in ConnectDynamoDB function")
 		return nil, err
 	}
 
-    // 結果を構造体にパース
-    users := []User{}
-    err = attributevalue.UnmarshalListOfMaps(resp.Items, &users)
-    if err != nil {
-		fmt.Println("error in parse users")
-        return nil, err
-    }
+	// ユーザー名をもとにユーザー情報を取得
+	groupName, err := getGroupName(userName, db)
+
+	if err != nil {
+		fmt.Println("error in getGroupName function")
+		return nil, err
+	}
+
+	// groupNameを使って同じグループに所属しているユーザーを全て取得
+	users, err := getUsersInGroupFromGroupName(groupName, db)
+
+	if err != nil {
+		fmt.Println("error in getUsersInGroupFromGroupName function")
+		return nil, err
+	}
 
 	return users, nil
 }
@@ -260,8 +253,6 @@ func getUsersInGroup(userName string) ([]User, error) {
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
     pathParam := request.PathParameters["userName"]
 	fmt.Println(pathParam)
-
-	fmt.Println(DYNAMO_ENDPOINT)
 
 	// 特定のグループに所属している全てのユーザーを取得
 	users, err := getUsersInGroup(pathParam)
