@@ -170,7 +170,7 @@ func getRanking(userNameSlice []common.User) ([]UserData, error) {
 }
 
 // groupNameを使って同じグループに所属しているユーザーを全て取得
-func getUsersInGroupFromGroupName(groupName string, db *dynamodb.Client) ([]common.User, error) {
+func getUsersInGroupFromGroupName(groupName string, client *dynamodb.Client) ([]common.User, error) {
 	// クエリを用いてグローバルセカンダリインデックス（GSI)内を検索
 	input := &dynamodb.QueryInput{
 		TableName: aws.String(common.TABLE_NAME),
@@ -181,7 +181,7 @@ func getUsersInGroupFromGroupName(groupName string, db *dynamodb.Client) ([]comm
 		},
 	}
 
-	resp, err := db.Query(context.TODO(), input)
+	resp, err := client.Query(context.TODO(), input)
 	if err != nil {
 		fmt.Println("error in parse users")
 		return nil, err
@@ -199,7 +199,7 @@ func getUsersInGroupFromGroupName(groupName string, db *dynamodb.Client) ([]comm
 }
 
 // ユーザー名からユーザーが所属しているgroupNameを取得
-func getGroupName(userName string, db *dynamodb.Client) (string, error) {
+func getGroupName(userName string, client *dynamodb.Client) (string, error) {
 	// 検索条件を用意
     getParam := &dynamodb.GetItemInput{
         TableName: aws.String("vitaminDback-userGroup-EPWXXRQCUDMA"),
@@ -209,7 +209,7 @@ func getGroupName(userName string, db *dynamodb.Client) (string, error) {
     }
 
     // 検索
-    result, err := db.GetItem(context.TODO(), getParam)
+    result, err := client.GetItem(context.TODO(), getParam)
 
     if err != nil {
 		fmt.Println("error in search user")
@@ -231,16 +231,16 @@ func getGroupName(userName string, db *dynamodb.Client) (string, error) {
 
 // 特定のグループに所属している全てのユーザーを取得
 func getUsersInGroup(userName string) ([]common.User, error) {
-	// DynamoDBに接続
-	db, err := common.ConnectDynamoDB()
+	// DynamoDBのクライアントを作成
+	client, err := common.CreateDynamoDBClient()
 
 	if err != nil {
-		fmt.Println("error in ConnectDynamoDB function")
+		fmt.Println("error in CreateDynamoDBClient function")
 		return nil, err
 	}
 
 	// ユーザー名をもとにユーザー情報を取得
-	groupName, err := getGroupName(userName, db)
+	groupName, err := getGroupName(userName, client)
 
 	if err != nil {
 		fmt.Println("error in getGroupName function")
@@ -256,7 +256,7 @@ func getUsersInGroup(userName string) ([]common.User, error) {
 	fmt.Println("groupName:", groupName)
 
 	// groupNameを使って同じグループに所属しているユーザーを全て取得
-	users, err := getUsersInGroupFromGroupName(groupName, db)
+	users, err := getUsersInGroupFromGroupName(groupName, client)
 
 	if err != nil {
 		fmt.Println("error in getUsersInGroupFromGroupName function")

@@ -25,8 +25,8 @@ type User struct {
 	RegisterDate string `dynamodbav:"registerDate" json:registerDate`
 }
 
-// DynamoDBに接続する
-func ConnectDynamoDB() (*dynamodb.Client, error) {
+// DynamoDBのクライアントを作成
+func CreateDynamoDBClient() (*dynamodb.Client, error) {
 	fmt.Println("ConnectDynamnoDB", DYNAMO_ENDPOINT)
 
 	// dynamodbのエンドポイントを指定
@@ -49,7 +49,7 @@ func ConnectDynamoDB() (*dynamodb.Client, error) {
         return nil, err
     }
 
-    db := dynamodb.NewFromConfig(cfg)
+    client := dynamodb.NewFromConfig(cfg)
 
-	return db, nil
+	return client, nil
 }
