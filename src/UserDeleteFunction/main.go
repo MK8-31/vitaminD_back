@@ -14,8 +14,8 @@ import (
 
 // dynamodbにあるユーザーのデータを削除する
 func deleteUser(userName string) error {
-	// DynamoDBに接続
-	db, err := common.ConnectDynamoDB()
+	// DynamoDBのクライアントを作成
+	client, err := common.CreateDynamoDBClient()
 
 	// 検索条件を用意
 	deleteParam := &dynamodb.DeleteItemInput{
@@ -28,7 +28,7 @@ func deleteUser(userName string) error {
 
 	// データを削除
 	// userNameがDBにない場合はエラーを返す
-	_, err = db.DeleteItem(context.TODO(), deleteParam)
+	_, err = client.DeleteItem(context.TODO(), deleteParam)
 
 	if err != nil {
 		fmt.Println("error in item dynamodb DeleteItem")

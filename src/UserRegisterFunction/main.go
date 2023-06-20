@@ -51,11 +51,11 @@ func putItemToDynamoDB(user *common.User) error {
 
 	fmt.Println(item)
 
-	// DynamoDBに接続
-	db, err := common.ConnectDynamoDB()
+	// DynamoDBのクライアントを作成
+	client, err := common.CreateDynamoDBClient()
 
 	// データを挿入
-	_, err = db.PutItem(context.TODO(), &dynamodb.PutItemInput{
+	_, err = client.PutItem(context.TODO(), &dynamodb.PutItemInput{
 		TableName: aws.String(common.TABLE_NAME),
 		Item: item,
 		ConditionExpression: aws.String("attribute_not_exists(userName)"),
