@@ -84,6 +84,28 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
         }, err
     }
 
+	// userNameとgroupNameが空の場合はエラーを返す
+	if user.UserName == "" || user.GroupName == "" {
+		fmt.Println("userName or groupName is empty")
+		return events.APIGatewayProxyResponse{
+            Body:       "userName or groupName is empty",
+            StatusCode: 401,
+        }, nil
+	}
+
+	// TODO: GitHubのアクセストークンで確認するように変更する
+	// GitHubにアクセスしてユーザー名が存在するか確認
+	err = common.AccessGitHubWithUserName(user.UserName)
+
+	// userNameがGitHubにない場合はエラーを返す
+	if err != nil {
+		fmt.Println(err.Error())
+		return events.APIGatewayProxyResponse{
+            Body:       err.Error(),
+            StatusCode: 401,
+        }, nil
+	}
+
 	// dynamodbにデータを挿入
 	err = putItemToDynamoDB(&user)
 
