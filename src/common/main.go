@@ -2,7 +2,9 @@ package common
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -52,4 +54,21 @@ func CreateDynamoDBClient() (*dynamodb.Client, error) {
     client := dynamodb.NewFromConfig(cfg)
 
 	return client, nil
+}
+
+// GitHubにアクセスしてユーザー名が存在するか確認する
+func AccessGitHubWithUserName(userName string) error {
+	urlAddress := "https://github-contributions-api.deno.dev/" + userName + ".text"
+
+	req, _ := http.NewRequest(http.MethodGet, urlAddress, nil)
+	client := new(http.Client)
+	resp, _ := client.Do(req)
+
+	if resp.StatusCode != 200 {
+		err := errors.New("userName is not found in GitHub")
+
+		return err
+	}
+
+	return nil
 }
