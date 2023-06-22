@@ -129,11 +129,11 @@ func sortWithExp(userDataSlice []UserData) []UserData {
 func addRank(sortedUserDataSlice []UserData) []UserData {
 	// 例：exp[1, 1, 2, 3, 3, 3, 4, 5, 5, 6] -> rank[1, 1, 3, 4, 4, 4, 7, 8, 8, 10]
 	var rank_i int64 = 0
-	var pred_exp int64 = -1
+	var pred_lv int64 = -1
 	var rankedUserDataSlice []UserData
 	for i, data := range sortedUserDataSlice {
-		if pred_exp != data.Exp {
-			pred_exp = data.Exp
+		if pred_lv != data.Lv {
+			pred_lv = data.Lv
 			rank_i = int64(i) + 1
 			data.Rank = rank_i
 		} else {
