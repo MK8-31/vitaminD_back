@@ -279,12 +279,14 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 			// userName（ユーザー）が見つからない場合は401エラーを返す
 			case *ErrUserNameNotFound:
 				return events.APIGatewayProxyResponse{
+					Headers: common.ORIGIN_HEADERS,
 					Body:       err.Error(),
 					StatusCode: 401,
 				}, nil
 
 			default:
 				return events.APIGatewayProxyResponse{
+					Headers: common.ORIGIN_HEADERS,
 					Body:       err.Error(),
 					StatusCode: 500,
 				}, err
@@ -300,6 +302,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if err != nil {
 		fmt.Println("error in getRanking function")
         return events.APIGatewayProxyResponse{
+			Headers: common.ORIGIN_HEADERS,
             Body:       "existing invalid userName in group",
             StatusCode: 401,
         }, nil
@@ -314,6 +317,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
     jsonBytes, _ := json.Marshal(res)
 
     return events.APIGatewayProxyResponse{
+		Headers: common.ORIGIN_HEADERS,
         Body:       string(jsonBytes),
         StatusCode: 200,
     }, nil

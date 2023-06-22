@@ -50,12 +50,14 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if err != nil {
 		fmt.Println("error in deleteUser function")
         return events.APIGatewayProxyResponse{
+			Headers: common.ORIGIN_HEADERS,
             Body:       "userName not found",
             StatusCode: 401,
         }, nil
     }
 
     return events.APIGatewayProxyResponse{
+		Headers: common.ORIGIN_HEADERS,
         Body:       "success",
         StatusCode: 200,
     }, nil

@@ -72,6 +72,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if err != nil {
 		fmt.Println("error in setUser function")
         return events.APIGatewayProxyResponse{
+			Headers: common.ORIGIN_HEADERS,
             Body:       err.Error(),
             StatusCode: 500,
         }, err
@@ -81,6 +82,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if user.UserName == "" || user.GroupName == "" {
 		fmt.Println("userName or groupName is empty")
 		return events.APIGatewayProxyResponse{
+			Headers: common.ORIGIN_HEADERS,
             Body:       "userName or groupName is empty",
             StatusCode: 401,
         }, nil
@@ -94,6 +96,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if err != nil {
 		fmt.Println(err.Error())
 		return events.APIGatewayProxyResponse{
+			Headers: common.ORIGIN_HEADERS,
             Body:       err.Error(),
             StatusCode: 401,
         }, nil
@@ -106,12 +109,14 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 	if err != nil {
 		fmt.Println("error in putItemToDynamoDB function")
         return events.APIGatewayProxyResponse{
+			Headers: common.ORIGIN_HEADERS,
             Body:       "user already exists",
             StatusCode: 401,
         }, nil
     }
 
     return events.APIGatewayProxyResponse{
+		Headers: common.ORIGIN_HEADERS,
         Body:       "success",
         StatusCode: 200,
     }, nil
