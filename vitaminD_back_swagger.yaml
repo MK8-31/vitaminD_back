@@ -1,0 +1,190 @@
+openapi: "3.0.3"
+
+info:
+  title: "vitaminD backend api"
+  description: "バックエンドのAPIの仕様書です"
+  version: "1.0.0"
+
+servers:
+  - url: "http://localhost:3000"
+    description: "ローカル環境"
+  - url: "******"
+    description: "本番環境"
+
+tags:
+  - name: "users"
+    description: "ユーザー"
+  - name: "ranking"
+    description: "ランキング"
+
+components:
+  schemas:
+    Success:
+        type: object
+        properties:
+          message:
+            type: string
+            example: "success"
+    UserAlreadyExists:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "userName already exists"
+    UserIsNotFoundInGitHub:
+      type: object
+      properties:
+        message:
+          type: string
+    UserNameOrGroupNameIsEmpty:
+      type: object
+      properties:
+        message:
+          type: string
+    FaildToGetRanking:
+      type: object
+      properties:
+        message:
+          type: string
+    UserNameIsNotFound:
+      type: object
+      properties:
+        message:
+          type: string
+
+paths:
+  "/register":
+    post:
+      summary: "ユーザ名とグループ名の登録"
+      tags: ["users"]
+      deprecated: false
+      requestBody:
+        description: "ユーザー名とグループ名"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userName: { type: string, example: "MK8-31" }
+                groupName: { type: string, example: "vitaminD" }
+      responses:
+        "201":
+          description: "成功"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+        "401":
+          description: "失敗"
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/UserAlreadyExists'
+                  - $ref: '#/components/schemas/UserIsNotFoundInGitHub'
+                  - $ref: '#/components/schemas/UserNameOrGroupNameIsEmpty'
+              examples:
+                example1:
+                  value:
+                    message: "userName already exists"
+                example2:
+                  value:
+                    message: "userName or groupName is empty"
+                example3:
+                  value:
+                    message: "userName is not found in GitHub"
+
+  "/delete/{userName}":
+    delete:
+      summary: "ユーザ名とグループ名の削除"
+      tags: ["users"]
+      deprecated: false
+      parameters:
+        - name: "userName"
+          in: "path"
+          description: "ユーザー名"
+          required: true
+          schema:
+            type: string
+      responses:
+        "201":
+          description: "成功"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+        "401":
+          description: "失敗"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "userName is not found"
+
+  "/ranking/{userName}":
+    get:
+      summary: "グループのランキングを返す"
+      tags: ["ranking"]
+      deprecated: false
+      parameters:
+        - name: userName
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "vitaminD"
+      responses:
+        "201":
+          description: "成功"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ranking:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        userName:
+                          type: string
+                          description: "ユーザー名"
+                        rank:
+                          type: integer
+                          description: "ユーザーの順位"
+                        exp:
+                          type: integer
+                          description: "ユーザーの経験値"
+                        lv:
+                          type: integer
+                          description: "ユーザーのレベル"
+              example:
+                ranking:
+                  - userName: yuki-shimojo269
+                    rank: 1
+                    exp: 10
+                    lv: 1
+                  - userName: MK8-31
+                    rank: 2
+                    exp: 0
+                    lv: 0
+
+        "401":
+          description: "失敗"
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/UserNameIsNotFound'
+                  - $ref: '#/components/schemas/FaildToGetRanking'
+              examples:
+                example1:
+                  value:
+                    message: "userName is not found"
+                example2:
+                  value:
+                    message: "failed to get ranking"
