@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -13,11 +14,11 @@ import (
 
 // for dev
 const AWS_REGION = "ap-northeast-1"
-// const DYNAMO_ENDPOINT = "http://dynamodb:8000"
+const DYNAMO_ENDPOINT = "http://dynamodb:8000"
 
 // for prod
 // 本番環境にアップする時はこっちに切り替える
-const DYNAMO_ENDPOINT = "https://dynamodb.ap-northeast-1.amazonaws.com"
+// const DYNAMO_ENDPOINT = "https://dynamodb.ap-northeast-1.amazonaws.com"
 
 const TABLE_NAME = "vitaminDback-userGroup-EPWXXRQCUDMA"
 
@@ -61,6 +62,17 @@ func CreateDynamoDBClient() (*dynamodb.Client, error) {
     client := dynamodb.NewFromConfig(cfg)
 
 	return client, nil
+}
+
+// レスポンスBodyを作成
+func CreateResponseBody(message string) string {
+	jsonBytes, _ := json.Marshal(
+		map[string]string{
+			"message": message,
+		},
+	)
+
+	return string(jsonBytes)
 }
 
 // GitHubにアクセスしてユーザー名が存在するか確認する

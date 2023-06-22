@@ -38,7 +38,7 @@ type ErrUserNameNotFound struct {
 }
 
 func (e *ErrUserNameNotFound) Error() string {
-	return "userName not found"
+	return "userName is not found"
 }
 
 func GetContributeNum(user common.User) (int64, error) {
@@ -280,14 +280,14 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 			case *ErrUserNameNotFound:
 				return events.APIGatewayProxyResponse{
 					Headers: common.ORIGIN_HEADERS,
-					Body:       err.Error(),
+					Body: common.CreateResponseBody(err.Error()),
 					StatusCode: 401,
 				}, nil
 
 			default:
 				return events.APIGatewayProxyResponse{
 					Headers: common.ORIGIN_HEADERS,
-					Body:       err.Error(),
+					Body: common.CreateResponseBody(err.Error()),
 					StatusCode: 500,
 				}, err
 		}
@@ -303,7 +303,7 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
 		fmt.Println("error in getRanking function")
         return events.APIGatewayProxyResponse{
 			Headers: common.ORIGIN_HEADERS,
-            Body:       "existing invalid userName in group",
+			Body: common.CreateResponseBody("failed to get ranking"),
             StatusCode: 401,
         }, nil
     }
