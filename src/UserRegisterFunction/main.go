@@ -14,12 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
-// Response Lambdaが返答するデータ
-type Response struct {
-    RequestMethod string `json:RequestMethod`
-    Result        string   `json:Result`
-}
-
 // リクエストボディをUser構造体に変換&登録日時を追加
 func setUser(user *common.User, request events.APIGatewayProxyRequest) error {
 
@@ -70,7 +64,6 @@ func putItemToDynamoDB(user *common.User) error {
 }
 
 func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-    method := request.HTTPMethod
     var user common.User
 
 	// リクエストボディをUser構造体に変換&登録日時を追加
@@ -118,15 +111,8 @@ func handler(request events.APIGatewayProxyRequest) (events.APIGatewayProxyRespo
         }, nil
     }
 
-    // httpレスポンス作成
-    res := Response{
-        RequestMethod: method,
-        Result:        "success",
-    }
-    jsonBytes, _ := json.Marshal(res)
-
     return events.APIGatewayProxyResponse{
-        Body:       string(jsonBytes),
+        Body:       "success",
         StatusCode: 200,
     }, nil
 }
