@@ -13,13 +13,20 @@ import (
 
 // for dev
 const AWS_REGION = "ap-northeast-1"
-const DYNAMO_ENDPOINT = "http://dynamodb:8000"
+// const DYNAMO_ENDPOINT = "http://dynamodb:8000"
 
 // for prod
 // 本番環境にアップする時はこっちに切り替える
-// const DYNAMO_ENDPOINT = "https://dynamodb.ap-northeast-1.amazonaws.com"
+const DYNAMO_ENDPOINT = "https://dynamodb.ap-northeast-1.amazonaws.com"
 
 const TABLE_NAME = "vitaminDback-userGroup-EPWXXRQCUDMA"
+
+var ORIGIN_HEADERS = map[string]string{
+	"Access-Control-Allow-Headers" : "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token",
+	"Content-Type": "application/json",
+	"Access-Control-Allow-Origin": "https://demetara.vercel.app",
+	"Access-Control-Allow-Methods": "OPTIONS,POST,GET,PUT,DELETE",
+}
 
 type User struct {
     UserName  string `dynamodbav:"userName" json:userName`
