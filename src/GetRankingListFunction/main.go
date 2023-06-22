@@ -127,13 +127,14 @@ func sortWithExp(userDataSlice []UserData) []UserData {
 }
 
 func addRank(sortedUserDataSlice []UserData) []UserData {
+	// 例：exp[1, 1, 2, 3, 3, 3, 4, 5, 5, 6] -> rank[1, 1, 3, 4, 4, 4, 7, 8, 8, 10]
 	var rank_i int64 = 0
 	var pred_exp int64 = -1
 	var rankedUserDataSlice []UserData
-	for _, data := range sortedUserDataSlice {
+	for i, data := range sortedUserDataSlice {
 		if pred_exp != data.Exp {
 			pred_exp = data.Exp
-			rank_i += 1
+			rank_i = int64(i) + 1
 			data.Rank = rank_i
 		} else {
 			// 前の人と同じ経験値の場合は同じ順位をつける
