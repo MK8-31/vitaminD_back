@@ -153,6 +153,9 @@ paths:
                         userName:
                           type: string
                           description: "ユーザー名"
+                        groupName:
+                          type: string
+                          description: " グループ名"
                         rank:
                           type: integer
                           description: "ユーザーの順位"
@@ -162,17 +165,45 @@ paths:
                         lv:
                           type: integer
                           description: "ユーザーのレベル"
-              example:
-                ranking:
-                  - userName: yuki-shimojo269
-                    rank: 1
-                    exp: 10
-                    lv: 1
-                  - userName: MK8-31
-                    rank: 2
-                    exp: 0
-                    lv: 0
-
+              examples:
+                example1:
+                  value:
+                    ranking:
+                      - userName: yuki-shimojo269
+                        groupName: vitaminD
+                        rank: 1
+                        exp: 10
+                        lv: 1
+                      - userName: MK8-31
+                        rank: 2
+                        exp: 0
+                        lv: 0
+                example2:
+                  value:
+                    ranking:
+                      - userName: yuki-shimojo269
+                        groupName: vitaminD
+                        rank: 1
+                        exp: 21
+                        lv: 2
+                      - userName: MK8-31
+                        groupName: vitaminD
+                        rank: 2
+                        exp: 5
+                        lv: 0
+                example3:
+                  value:
+                    ranking:
+                      - userName: MK8-31
+                        groupName: vitaminD
+                        rank: 1
+                        exp: 45
+                        lv: 4
+                      - userName: yuki-shimojo269
+                        groupName: vitaminD
+                        rank: 2
+                        exp: 35
+                        lv: 3
         "401":
           description: "失敗"
           content:
