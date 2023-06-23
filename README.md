@@ -1,6 +1,6 @@
 # vitaminD_back
 ## インフラ構成
-![バックエンドインフラ構成](https://github.com/MK8-31/vitaminD_back/assets/68171652/6b44d3ae-15a8-4abc-ab2a-5d4121628fac)
+![バックエンドインフラ構成](https://github.com/MK8-31/vitaminD_back/assets/68171652/215e5152-bfe3-4d7d-a83d-9bb50ef584bf)
 
 
 ## 使用技術
